@@ -2,8 +2,7 @@ use crate::ast::{Expr, Program, Stmt, UseStatement};
 use crate::common::{expect_identifier, expect_string};
 use crate::parser::Parser;
 use crate::position::{Span, WithSpan};
-use crate::token::{Token, TokenKind};
-use std::os::macos::raw::stat;
+use crate::token::{TokenKind};
 
 pub fn parse_program(parser: &mut Parser) -> Result<Program, ()> {
     let use_statements = parse_use_statements(parser);

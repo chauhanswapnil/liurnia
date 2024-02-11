@@ -1,4 +1,3 @@
-use crate::ast::Expr::Binary;
 use crate::ast::{BinaryOperator, Expr, LogicalOperator, UnaryOperator};
 use crate::parser::Parser;
 use crate::position::{Span, WithSpan};
