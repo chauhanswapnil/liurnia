@@ -180,10 +180,7 @@ impl<'a> Lexer<'a> {
         keywords.insert("this", TokenType::This);
         keywords.insert("nil", TokenType::Nil);
 
-        match keywords.get(identifier) {
-            None => None,
-            Some(token) => Some(token.clone()),
-        }
+        keywords.get(identifier).cloned()
     }
 
     fn identifier(&mut self, x: char) -> Option<TokenType> {

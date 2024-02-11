@@ -1,4 +1,4 @@
-use crate::position::{Diagnostic, Span, WithSpan};
+use crate::position::{Diagnostic, Span};
 use crate::token::{Token, TokenKind, TokenType};
 
 static EOF_TOKEN: Token = Token {
@@ -22,7 +22,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn peek_token(&self) -> &'a Token {
-        self.tokens.get(self.cursor).unwrap_or_else(|| &EOF_TOKEN)
+        self.tokens.get(self.cursor).unwrap_or(&EOF_TOKEN)
     }
 
     pub fn peek(&self) -> TokenKind {
@@ -37,7 +37,7 @@ impl<'a> Parser<'a> {
     pub fn advance(&mut self) -> &'a Token {
         let token = self.tokens.get(self.cursor);
         if let Some(token) = token {
-            self.cursor = self.cursor + 1;
+            self.cursor += 1;
             token
         } else {
             &EOF_TOKEN
@@ -59,7 +59,7 @@ impl<'a> Parser<'a> {
 
     pub fn optionally(&mut self, expected: TokenKind) -> Result<bool, ()> {
         let token = self.peek();
-        if TokenKind::from(token) == expected {
+        if token == expected {
             self.expect(expected)?;
             Ok(true)
         } else {

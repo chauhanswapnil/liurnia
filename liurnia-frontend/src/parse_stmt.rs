@@ -6,8 +6,8 @@ use crate::token::{TokenKind};
 
 pub fn parse_program(parser: &mut Parser) -> Result<Program, ()> {
     let use_statements = parse_use_statements(parser);
-    let statements = parse_declarations(parser);
-    return Ok(Program::Module(use_statements?, Vec::new()));
+    let _statements = parse_declarations(parser);
+    Ok(Program::Module(use_statements?, Vec::new()))
     // parse_statements(parser);
 }
 
@@ -16,7 +16,7 @@ fn parse_use_statements(parser: &mut Parser) -> Result<Vec<WithSpan<UseStatement
     while parser.check(TokenKind::Use) || parser.is_eof() {
         let begin_token = parser.expect(TokenKind::Use)?;
         let use_identifier = expect_identifier(parser)?;
-        let from_token = parser.expect(TokenKind::From)?;
+        let _from_token = parser.expect(TokenKind::From)?;
         let from_string = expect_string(parser)?;
         let end_token = parser.expect(TokenKind::Semicolon)?;
         let use_stmt = Ok(WithSpan {
@@ -25,7 +25,7 @@ fn parse_use_statements(parser: &mut Parser) -> Result<Vec<WithSpan<UseStatement
         });
         use_statements.push(use_stmt?);
     }
-    return Ok(use_statements);
+    Ok(use_statements)
 }
 
 fn parse_declarations(parser: &mut Parser) -> Result<Vec<WithSpan<Stmt>>, ()> {
@@ -36,7 +36,7 @@ fn parse_declarations(parser: &mut Parser) -> Result<Vec<WithSpan<Stmt>>, ()> {
             _ => parse_statement(parser)?,
         })
     }
-    return Ok(statements);
+    Ok(statements)
 }
 
 fn parse_expr(parser: &mut Parser) -> Result<WithSpan<Expr>, ()> {
@@ -91,12 +91,12 @@ fn parse_return_statement(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::{Expr, Program, Stmt, UseStatement};
+    use crate::ast::{Expr, Stmt, UseStatement};
     use crate::parse_stmt::{parse_return_statement, parse_use_statements};
     use crate::parser::Parser;
     use crate::position::{Span, WithSpan};
     use crate::tokenizer::tokenize_with_context;
-    use std::result;
+    
 
     #[test]
     fn test_use_stmt() {
@@ -121,7 +121,7 @@ mod tests {
                     }]
                 );
             }
-            Err(err) => {
+            Err(_err) => {
                 println!("{:?}", parser.diagnostics().to_vec())
             }
         }

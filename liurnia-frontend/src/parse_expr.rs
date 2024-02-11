@@ -204,7 +204,7 @@ fn parse_assign(parser: &mut Parser, left: WithSpan<Expr>) -> Result<WithSpan<Ex
             span,
         )),
         _ => {
-            parser.error(&"Got Invalid left expression".to_string(), left.span);
+            parser.error("Got Invalid left expression", left.span);
             Err(())
         }
     }
@@ -234,7 +234,7 @@ fn parse_get(parser: &mut Parser, left: WithSpan<Expr>) -> Result<WithSpan<Expr>
     parser.expect(TokenKind::Dot)?;
     let token = parser.advance();
     match &token.token_type {
-        &TokenType::IdentifierLiteral(ref i) => {
+        TokenType::IdentifierLiteral(i) => {
             let span = Span::union_span(left.span, token.span);
             Ok(WithSpan::new(
                 Expr::Get(Box::new(left), WithSpan::new(i.clone(), token.span)),
@@ -259,10 +259,10 @@ fn parse_primary(parser: &mut Parser) -> Result<WithSpan<Expr>, ()> {
         &TokenType::NumberLiteral(n) => Ok(WithSpan::new(Expr::NumberLiteral(n), token.span)),
         &TokenType::True => Ok(WithSpan::new(Expr::BooleanLiteral(true), token.span)),
         &TokenType::False => Ok(WithSpan::new(Expr::BooleanLiteral(false), token.span)),
-        &TokenType::StringLiteral(ref s) => {
+        TokenType::StringLiteral(s) => {
             Ok(WithSpan::new(Expr::StringLiteral(s.clone()), token.span))
         }
-        &TokenType::IdentifierLiteral(ref s) => Ok(WithSpan::new(
+        TokenType::IdentifierLiteral(s) => Ok(WithSpan::new(
             Expr::Variable(WithSpan::new(s.clone(), token.span)),
             token.span,
         )),

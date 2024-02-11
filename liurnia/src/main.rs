@@ -5,7 +5,7 @@ use std::{env, io};
 fn main() {
     let args: Vec<String> = env::args().skip(1).collect();
 
-    if args.len() == 0 {
+    if args.is_empty() {
         println!("Welcome to Liurnia REPL. Press Ctrl+D to exit.");
 
         loop {
@@ -17,7 +17,7 @@ fn main() {
                 if input.is_empty() {
                     continue; // Skip empty lines
                 }
-                parse(&input);
+                parse(input);
             } else {
                 break; // Exit on error
             }

@@ -107,7 +107,7 @@ impl<T> WithSpan<T> {
         }
     }
 
-    pub const unsafe fn new_unchecked(value: T, start: u32, end: u32) -> Self {
+    pub const unsafe fn new_unchecked(value: T, _start: u32, _end: u32) -> Self {
         Self {
             value,
             span: Span {

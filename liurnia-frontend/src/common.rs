@@ -1,7 +1,7 @@
 use crate::ast::Identifier;
 use crate::parser::Parser;
 use crate::position::WithSpan;
-use crate::token::{Token, TokenKind, TokenType};
+use crate::token::{TokenKind, TokenType};
 
 pub fn expect_identifier(p: &mut Parser) -> Result<WithSpan<Identifier>, ()> {
     let token = p.advance();
