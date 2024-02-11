@@ -1,24 +1,24 @@
-use super::token::Token;
+use super::token::{Token, TokenType};
 use crate::position::*;
 use std::iter::Peekable;
 use std::str;
 use std::str::Chars;
 
 struct Scanner<'a> {
-    current_position: BytePos,
-    it: Peekable<Chars<'a>>,
+    current_position: LineColumn,
+    iter: Peekable<Chars<'a>>,
 }
 
 impl<'a> Scanner<'a> {
     fn new(buf: &str) -> Scanner {
         Scanner {
-            current_position: BytePos::default(),
-            it: buf.chars().peekable(),
+            current_position: LineColumn::default(),
+            iter: buf.chars().peekable(),
         }
     }
 
     fn next(&mut self) -> Option<char> {
-        let next = self.it.next();
+        let next = self.iter.next();
         if let Some(c) = next {
             self.current_position = self.current_position.shift(c);
         }
@@ -26,7 +26,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn peek(&mut self) -> Option<&char> {
-        self.it.peek()
+        self.iter.peek()
     }
 
     // Consume next char if it matches
@@ -51,7 +51,7 @@ impl<'a> Scanner<'a> {
     where
         F: Fn(char) -> bool,
     {
-        let mut it = self.it.clone();
+        let mut it = self.iter.clone();
         match it.next() {
             None => return false,
             _ => (),
@@ -87,93 +87,98 @@ impl<'a> Scanner<'a> {
 }
 
 struct Lexer<'a> {
-    it: Scanner<'a>,
+    scanner: Scanner<'a>,
 }
 
 impl<'a> Lexer<'a> {
     fn new(buf: &str) -> Lexer {
         Lexer {
-            it: Scanner::new(buf),
+            scanner: Scanner::new(buf),
         }
     }
 
-    fn match_token(&mut self, ch: char) -> Option<Token> {
+    fn match_token(&mut self, ch: char) -> Option<TokenType> {
         match ch {
-            '=' => Some(self.either('=', Token::EqualEqual, Token::Equal)),
-            '!' => Some(self.either('=', Token::BangEqual, Token::Bang)),
-            '<' => Some(self.either('=', Token::LessEqual, Token::Less)),
-            '>' => Some(self.either('=', Token::GreaterEqual, Token::Greater)),
+            '=' => Some(self.either('=', TokenType::EqualEqual, TokenType::Equal)),
+            '!' => Some(self.either('=', TokenType::BangEqual, TokenType::Bang)),
+            '<' => Some(self.either('=', TokenType::LessEqual, TokenType::Less)),
+            '>' => Some(self.either('=', TokenType::GreaterEqual, TokenType::Greater)),
             ' ' => None,
             '/' => {
-                if self.it.consume_if(|ch| ch == '/') {
-                    self.it.consume_while(|ch| ch != '\n');
+                if self.scanner.consume_if(|ch| ch == '/') {
+                    self.scanner.consume_while(|ch| ch != '\n');
                     None
                 } else {
-                    Some(Token::Slash)
+                    Some(TokenType::Slash)
                 }
             }
             '\n' => None,
             '\t' => None,
             '\r' => None,
             '"' => {
-                let string: String = self.it.consume_while(|ch| ch != '"').into_iter().collect();
+                let string: String = self
+                    .scanner
+                    .consume_while(|ch| ch != '"')
+                    .into_iter()
+                    .collect();
                 // Skip last "
-                match self.it.next() {
-                    None => Some(Token::UnterminatedString),
-                    _ => Some(Token::StringLiteral(string)),
+                match self.scanner.next() {
+                    None => Some(TokenType::UnterminatedString),
+                    _ => Some(TokenType::StringLiteral(string)),
                 }
             }
             x if x.is_numeric() => self.number(x),
             x if x.is_ascii_alphabetic() || x == '_' => self.identifier(x),
-            '.' => Some(Token::Dot),
-            '(' => Some(Token::LeftParen),
-            ')' => Some(Token::RightParen),
-            '{' => Some(Token::LeftBrace),
-            '}' => Some(Token::RightBrace),
-            '[' => Some(Token::LeftBracket),
-            ']' => Some(Token::RightBracket),
-            ',' => Some(Token::Comma),
-            '-' => Some(Token::Minus),
-            '+' => Some(Token::Plus),
-            ';' => Some(Token::Semicolon),
-            '*' => Some(Token::Star),
-            '%' => Some(Token::Percent),
-            '|' => Some(Token::Pipe),
-            c => Some(Token::Unknown(c)),
+            '.' => Some(TokenType::Dot),
+            '(' => Some(TokenType::LeftParen),
+            ')' => Some(TokenType::RightParen),
+            '{' => Some(TokenType::LeftBrace),
+            '}' => Some(TokenType::RightBrace),
+            '[' => Some(TokenType::LeftBracket),
+            ']' => Some(TokenType::RightBracket),
+            ',' => Some(TokenType::Comma),
+            '-' => Some(TokenType::Minus),
+            '+' => Some(TokenType::Plus),
+            ';' => Some(TokenType::Semicolon),
+            '*' => Some(TokenType::Star),
+            '%' => Some(TokenType::Percent),
+            '|' => Some(TokenType::Pipe),
+            c => Some(TokenType::Unknown(c)),
         }
     }
 
-    fn either(&mut self, to_match: char, matched: Token, unmatched: Token) -> Token {
-        if self.it.consume_if(|ch| ch == to_match) {
+    fn either(&mut self, to_match: char, matched: TokenType, unmatched: TokenType) -> TokenType {
+        if self.scanner.consume_if(|ch| ch == to_match) {
             matched
         } else {
             unmatched
         }
     }
 
-    fn keyword(&self, identifier: &str) -> Option<Token> {
+    fn keyword(&self, identifier: &str) -> Option<TokenType> {
         use std::collections::HashMap;
-        let mut keywords: HashMap<&str, Token> = HashMap::new();
-        keywords.insert("and", Token::And);
-        keywords.insert("or", Token::Or);
-        keywords.insert("if", Token::If);
-        keywords.insert("else", Token::Else);
-        keywords.insert("for", Token::For);
-        keywords.insert("while", Token::While);
-        keywords.insert("print", Token::Print);
-        keywords.insert("var", Token::Var);
-        keywords.insert("type", Token::Type);
-        keywords.insert("number", Token::Number);
-        keywords.insert("string", Token::String);
-        keywords.insert("bool", Token::Bool);
-        keywords.insert("true", Token::True);
-        keywords.insert("false", Token::False);
-        keywords.insert("use", Token::Use);
-        keywords.insert("export", Token::Export);
-        keywords.insert("from", Token::From);
-        keywords.insert("fun", Token::Fun);
-        keywords.insert("struct", Token::Struct);
-        keywords.insert("nil", Token::Nil);
+        let mut keywords: HashMap<&str, TokenType> = HashMap::new();
+        keywords.insert("and", TokenType::And);
+        keywords.insert("or", TokenType::Or);
+        keywords.insert("if", TokenType::If);
+        keywords.insert("else", TokenType::Else);
+        keywords.insert("for", TokenType::For);
+        keywords.insert("while", TokenType::While);
+        keywords.insert("print", TokenType::Print);
+        keywords.insert("return", TokenType::Return);
+        keywords.insert("var", TokenType::Var);
+        keywords.insert("type", TokenType::Type);
+        keywords.insert("number", TokenType::Number);
+        keywords.insert("string", TokenType::String);
+        keywords.insert("bool", TokenType::Bool);
+        keywords.insert("true", TokenType::True);
+        keywords.insert("false", TokenType::False);
+        keywords.insert("use", TokenType::Use);
+        keywords.insert("from", TokenType::From);
+        keywords.insert("fun", TokenType::Fun);
+        keywords.insert("struct", TokenType::Struct);
+        keywords.insert("this", TokenType::This);
+        keywords.insert("nil", TokenType::Nil);
 
         match keywords.get(identifier) {
             None => None,
@@ -181,77 +186,78 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn identifier(&mut self, x: char) -> Option<Token> {
+    fn identifier(&mut self, x: char) -> Option<TokenType> {
         let mut identifier = String::new();
         identifier.push(x);
         let rest: String = self
-            .it
+            .scanner
             .consume_while(|a| a.is_ascii_alphanumeric() || a == '_')
             .into_iter()
             .collect();
         identifier.push_str(rest.as_str());
         match self.keyword(&identifier) {
-            None => Some(Token::IdentifierLiteral(identifier)),
+            None => Some(TokenType::IdentifierLiteral(identifier)),
             Some(token) => Some(token),
         }
     }
 
-    fn number(&mut self, x: char) -> Option<Token> {
+    fn number(&mut self, x: char) -> Option<TokenType> {
         let mut number = String::new();
         number.push(x);
         let num: String = self
-            .it
+            .scanner
             .consume_while(|a| a.is_numeric())
             .into_iter()
             .collect();
         number.push_str(num.as_str());
-        if self.it.peek() == Some(&'.') && self.it.consume_if_next(|ch| ch.is_numeric()) {
+        if self.scanner.peek() == Some(&'.') && self.scanner.consume_if_next(|ch| ch.is_numeric()) {
             let num2: String = self
-                .it
+                .scanner
                 .consume_while(|a| a.is_numeric())
                 .into_iter()
                 .collect();
             number.push('.');
             number.push_str(num2.as_str());
         }
-        Some(Token::NumberLiteral(number.parse::<f64>().unwrap()))
+        Some(TokenType::NumberLiteral(number.parse::<f64>().unwrap()))
     }
 
-    fn tokenize_with_context(&mut self) -> Vec<WithSpan<Token>> {
-        let mut tokens: Vec<WithSpan<Token>> = Vec::new();
+    fn tokenize_with_context(&mut self) -> Vec<Token> {
+        let mut tokens: Vec<Token> = Vec::new();
         loop {
-            let initial_position = self.it.current_position;
-            let ch = match self.it.next() {
+            let initial_position = self.scanner.current_position;
+            let ch = match self.scanner.next() {
                 None => break,
                 Some(c) => c,
             };
-            if let Some(token) = self.match_token(ch) {
-                tokens.push(WithSpan::new(
-                    token,
-                    Span {
+            if let Some(token_type) = self.match_token(ch) {
+                tokens.push(Token {
+                    token_type,
+                    span: Span {
                         start: initial_position,
-                        end: self.it.current_position,
+                        end: self.scanner.current_position,
                     },
-                ));
+                });
             }
         }
         tokens
     }
 }
 
-pub fn tokenize_with_context(buf: &str) -> Vec<WithSpan<Token>> {
+pub fn tokenize_with_context(buf: &str) -> Vec<Token> {
     let mut t = Lexer::new(buf);
     t.tokenize_with_context()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Token;
-    fn tokenize(buf: &str) -> Vec<Token> {
-        use super::tokenize_with_context;
+    use super::{tokenize_with_context, Token, TokenType};
+    use crate::position::{LineColumn, Span};
+
+    fn tokenize(buf: &str) -> Vec<TokenType> {
         tokenize_with_context(buf)
             .iter()
-            .map(|tc| tc.value.clone())
+            .map(|tc| tc.token_type.clone())
             .collect()
     }
 
@@ -259,60 +265,282 @@ mod tests {
     fn test_errors() {
         assert_eq!(
             tokenize("\"Unterminated string..."),
-            vec![Token::UnterminatedString]
+            vec![TokenType::UnterminatedString]
         );
-        assert_eq!(tokenize("&"), vec![Token::Unknown('&')]);
+        assert_eq!(tokenize("&"), vec![TokenType::Unknown('&')]);
         assert_eq!(
             tokenize("^^"),
-            vec![Token::Unknown('^'), Token::Unknown('^')]
+            vec![TokenType::Unknown('^'), TokenType::Unknown('^')]
         );
         assert_eq!(
             tokenize("& \"test"),
-            vec![Token::Unknown('&'), Token::UnterminatedString]
+            vec![TokenType::Unknown('&'), TokenType::UnterminatedString]
         );
     }
 
     #[test]
-    fn test() {
+    fn test_tokens() {
         assert_eq!(tokenize(""), vec![]);
-        assert_eq!(tokenize("="), vec![Token::Equal]);
-        assert_eq!(tokenize("=="), vec![Token::EqualEqual]);
+        assert_eq!(tokenize("="), vec![TokenType::Equal]);
+        assert_eq!(tokenize("=="), vec![TokenType::EqualEqual]);
         assert_eq!(
             tokenize("== = =="),
-            vec![Token::EqualEqual, Token::Equal, Token::EqualEqual]
+            vec![
+                TokenType::EqualEqual,
+                TokenType::Equal,
+                TokenType::EqualEqual
+            ]
         );
         assert_eq!(tokenize("//test"), vec![]);
-        assert_eq!(tokenize("=//test"), vec![Token::Equal]);
+        assert_eq!(tokenize("=//test"), vec![TokenType::Equal]);
         assert_eq!(
             tokenize(
                 "=//test
         ="
             ),
-            vec![Token::Equal, Token::Equal]
+            vec![TokenType::Equal, TokenType::Equal]
         );
         assert_eq!(
             tokenize("\"test\""),
-            vec![Token::StringLiteral("test".to_string())]
+            vec![TokenType::StringLiteral("test".to_string())]
         );
-        assert_eq!(tokenize("12.34"), vec![Token::NumberLiteral(12.34)]);
+        assert_eq!(tokenize("12.34"), vec![TokenType::NumberLiteral(12.34)]);
         assert_eq!(
             tokenize("99."),
-            vec![Token::NumberLiteral(99.00), Token::Dot]
+            vec![TokenType::NumberLiteral(99.00), TokenType::Dot]
         );
         assert_eq!(
             tokenize("99.="),
-            vec![Token::NumberLiteral(99.00), Token::Dot, Token::Equal]
+            vec![
+                TokenType::NumberLiteral(99.00),
+                TokenType::Dot,
+                TokenType::Equal
+            ]
         );
-        assert_eq!(tokenize("!"), vec![Token::Bang]);
-        assert_eq!(tokenize("!="), vec![Token::BangEqual]);
+        assert_eq!(tokenize("!"), vec![TokenType::Bang]);
+        assert_eq!(tokenize("!="), vec![TokenType::BangEqual]);
         assert_eq!(
             tokenize("test"),
-            vec![Token::IdentifierLiteral("test".to_string())]
+            vec![TokenType::IdentifierLiteral("test".to_string())]
         );
-        assert_eq!(tokenize("struct"), vec![Token::Struct]);
-        assert_eq!(tokenize("or"), vec![Token::Or]);
-        assert_eq!(tokenize("use"), vec![Token::Use]);
-        assert_eq!(tokenize("["), vec![Token::LeftBracket]);
-        assert_eq!(tokenize("]"), vec![Token::RightBracket]);
+        assert_eq!(tokenize("struct"), vec![TokenType::Struct]);
+        assert_eq!(tokenize("or"), vec![TokenType::Or]);
+        assert_eq!(tokenize("use"), vec![TokenType::Use]);
+        assert_eq!(tokenize("["), vec![TokenType::LeftBracket]);
+        assert_eq!(tokenize("]"), vec![TokenType::RightBracket]);
+    }
+
+    #[test]
+    fn test_with_span() {
+        let tokens = tokenize_with_context(
+            "fun main() {\
+        var a = \"100\";
+        return a;
+        }",
+        );
+        assert_eq!(
+            tokens,
+            vec![
+                Token {
+                    token_type: TokenType::Fun,
+                    span: Span {
+                        start: LineColumn { line: 1, column: 0 },
+                        end: LineColumn { line: 1, column: 3 }
+                    }
+                },
+                Token {
+                    token_type: TokenType::IdentifierLiteral("main".to_string()),
+                    span: Span {
+                        start: LineColumn { line: 1, column: 4 },
+                        end: LineColumn { line: 1, column: 8 }
+                    }
+                },
+                Token {
+                    token_type: TokenType::LeftParen,
+                    span: Span {
+                        start: LineColumn { line: 1, column: 8 },
+                        end: LineColumn { line: 1, column: 9 }
+                    }
+                },
+                Token {
+                    token_type: TokenType::RightParen,
+                    span: Span {
+                        start: LineColumn { line: 1, column: 9 },
+                        end: LineColumn {
+                            line: 1,
+                            column: 10
+                        }
+                    }
+                },
+                Token {
+                    token_type: TokenType::LeftBrace,
+                    span: Span {
+                        start: LineColumn {
+                            line: 1,
+                            column: 11
+                        },
+                        end: LineColumn {
+                            line: 1,
+                            column: 12
+                        }
+                    }
+                },
+                Token {
+                    token_type: TokenType::Var,
+                    span: Span {
+                        start: LineColumn {
+                            line: 1,
+                            column: 12
+                        },
+                        end: LineColumn {
+                            line: 1,
+                            column: 15
+                        }
+                    }
+                },
+                Token {
+                    token_type: TokenType::IdentifierLiteral("a".to_string()),
+                    span: Span {
+                        start: LineColumn {
+                            line: 1,
+                            column: 16
+                        },
+                        end: LineColumn {
+                            line: 1,
+                            column: 17
+                        }
+                    }
+                },
+                Token {
+                    token_type: TokenType::Equal,
+                    span: Span {
+                        start: LineColumn {
+                            line: 1,
+                            column: 18
+                        },
+                        end: LineColumn {
+                            line: 1,
+                            column: 19
+                        }
+                    }
+                },
+                Token {
+                    token_type: TokenType::StringLiteral("100".to_string()),
+                    span: Span {
+                        start: LineColumn {
+                            line: 1,
+                            column: 20
+                        },
+                        end: LineColumn {
+                            line: 1,
+                            column: 25
+                        }
+                    }
+                },
+                Token {
+                    token_type: TokenType::Semicolon,
+                    span: Span {
+                        start: LineColumn {
+                            line: 1,
+                            column: 25
+                        },
+                        end: LineColumn {
+                            line: 1,
+                            column: 26
+                        }
+                    }
+                },
+                Token {
+                    token_type: TokenType::Return,
+                    span: Span {
+                        start: LineColumn { line: 2, column: 8 },
+                        end: LineColumn {
+                            line: 2,
+                            column: 14
+                        }
+                    }
+                },
+                Token {
+                    token_type: TokenType::IdentifierLiteral("a".to_string()),
+                    span: Span {
+                        start: LineColumn {
+                            line: 2,
+                            column: 15
+                        },
+                        end: LineColumn {
+                            line: 2,
+                            column: 16
+                        }
+                    }
+                },
+                Token {
+                    token_type: TokenType::Semicolon,
+                    span: Span {
+                        start: LineColumn {
+                            line: 2,
+                            column: 16
+                        },
+                        end: LineColumn {
+                            line: 2,
+                            column: 17
+                        }
+                    }
+                },
+                Token {
+                    token_type: TokenType::RightBrace,
+                    span: Span {
+                        start: LineColumn { line: 3, column: 8 },
+                        end: LineColumn { line: 3, column: 9 }
+                    }
+                }
+            ]
+        );
+        let tokens = tokenize_with_context("{ var a = \"100");
+        assert_eq!(
+            tokens,
+            vec![
+                Token {
+                    token_type: TokenType::LeftBrace,
+                    span: Span {
+                        start: LineColumn { line: 1, column: 0 },
+                        end: LineColumn { line: 1, column: 1 }
+                    }
+                },
+                Token {
+                    token_type: TokenType::Var,
+                    span: Span {
+                        start: LineColumn { line: 1, column: 2 },
+                        end: LineColumn { line: 1, column: 5 }
+                    }
+                },
+                Token {
+                    token_type: TokenType::IdentifierLiteral("a".to_string()),
+                    span: Span {
+                        start: LineColumn { line: 1, column: 6 },
+                        end: LineColumn { line: 1, column: 7 }
+                    }
+                },
+                Token {
+                    token_type: TokenType::Equal,
+                    span: Span {
+                        start: LineColumn { line: 1, column: 8 },
+                        end: LineColumn { line: 1, column: 9 }
+                    }
+                },
+                Token {
+                    token_type: TokenType::UnterminatedString,
+                    span: Span {
+                        start: LineColumn {
+                            line: 1,
+                            column: 10
+                        },
+                        end: LineColumn {
+                            line: 1,
+                            column: 14
+                        }
+                    }
+                }
+            ]
+        );
     }
 }

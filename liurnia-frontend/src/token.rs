@@ -1,7 +1,14 @@
+use crate::position::Span;
 use std::fmt::Display;
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct Token {
+    pub token_type: TokenType,
+    pub span: Span,
+}
+
 #[derive(PartialEq, Debug, Clone)]
-pub enum Token {
+pub enum TokenType {
     // Single-character tokens.
     LeftParen,    // (
     RightParen,   // )
@@ -46,7 +53,8 @@ pub enum Token {
 
     // Keeping this as a keyword for now,
     // will change it to function later
-    Print, // print
+    Print,  // print
+    Return, // return
 
     // Assignment and types
     Var,    // var
@@ -59,12 +67,12 @@ pub enum Token {
     False, // false
 
     // Module System
-    Use,    // use
-    Export, // export
-    From,   // From
+    Use,  // use
+    From, // From
 
     Fun,    // fun
     Struct, // struct
+    This,   // this
 
     Nil, // nil
 
@@ -120,7 +128,8 @@ pub enum TokenKind {
 
     // Keeping this as a keyword for now,
     // will change it to function later
-    Print, // print
+    Print,  // print
+    Return, // return
 
     // Assignment and types
     Var,    // var
@@ -133,12 +142,12 @@ pub enum TokenKind {
     False, // false
 
     // Module System
-    Use,    // use
-    Export, // export
-    From,   // From
+    Use,  // use
+    From, // From
 
     Fun,    // fun
     Struct, // struct
+    This,   // this
 
     Nil, // nil
 
@@ -148,65 +157,66 @@ pub enum TokenKind {
     Unknown,
 }
 
-impl Display for Token {
+impl Display for TokenType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let kind: TokenKind = self.into();
         write!(f, "{}", kind)
     }
 }
 
-impl From<&Token> for TokenKind {
-    fn from(token: &Token) -> Self {
+impl From<&TokenType> for TokenKind {
+    fn from(token: &TokenType) -> Self {
         match token {
-            Token::LeftParen => TokenKind::LeftParen,
-            Token::RightParen => TokenKind::RightParen,
-            Token::LeftBrace => TokenKind::LeftBrace,
-            Token::RightBrace => TokenKind::RightBrace,
-            Token::LeftBracket => TokenKind::LeftBracket,
-            Token::RightBracket => TokenKind::RightBracket,
-            Token::Comma => TokenKind::Comma,
-            Token::Dot => TokenKind::Dot,
-            Token::Minus => TokenKind::Minus,
-            Token::Plus => TokenKind::Plus,
-            Token::Semicolon => TokenKind::Semicolon,
-            Token::Slash => TokenKind::Slash,
-            Token::Star => TokenKind::Star,
-            Token::Percent => TokenKind::Percent,
-            Token::Pipe => TokenKind::Pipe,
-            Token::Bang => TokenKind::Bang,
-            Token::BangEqual => TokenKind::BangEqual,
-            Token::Equal => TokenKind::Equal,
-            Token::EqualEqual => TokenKind::EqualEqual,
-            Token::Greater => TokenKind::Greater,
-            Token::GreaterEqual => TokenKind::GreaterEqual,
-            Token::Less => TokenKind::Less,
-            Token::LessEqual => TokenKind::LessEqual,
-            Token::IdentifierLiteral(_) => TokenKind::IdentifierLiteral,
-            Token::StringLiteral(_) => TokenKind::StringLiteral,
-            Token::NumberLiteral(_) => TokenKind::NumberLiteral,
-            Token::And => TokenKind::And,
-            Token::Or => TokenKind::Or,
-            Token::If => TokenKind::If,
-            Token::Else => TokenKind::Else,
-            Token::For => TokenKind::For,
-            Token::While => TokenKind::While,
-            Token::Print => TokenKind::Print,
-            Token::Var => TokenKind::Var,
-            Token::Type => TokenKind::Type,
-            Token::Number => TokenKind::Number,
-            Token::String => TokenKind::String,
-            Token::Bool => TokenKind::Bool,
-            Token::True => TokenKind::True,
-            Token::False => TokenKind::False,
-            Token::Use => TokenKind::Use,
-            Token::Export => TokenKind::Export,
-            Token::From => TokenKind::From,
-            Token::Fun => TokenKind::Fun,
-            Token::Struct => TokenKind::Struct,
-            Token::Nil => TokenKind::Nil,
-            Token::Eof => TokenKind::Eof,
-            Token::UnterminatedString => TokenKind::UnterminatedString,
-            Token::Unknown(_) => TokenKind::Unknown,
+            TokenType::LeftParen => TokenKind::LeftParen,
+            TokenType::RightParen => TokenKind::RightParen,
+            TokenType::LeftBrace => TokenKind::LeftBrace,
+            TokenType::RightBrace => TokenKind::RightBrace,
+            TokenType::LeftBracket => TokenKind::LeftBracket,
+            TokenType::RightBracket => TokenKind::RightBracket,
+            TokenType::Comma => TokenKind::Comma,
+            TokenType::Dot => TokenKind::Dot,
+            TokenType::Minus => TokenKind::Minus,
+            TokenType::Plus => TokenKind::Plus,
+            TokenType::Semicolon => TokenKind::Semicolon,
+            TokenType::Slash => TokenKind::Slash,
+            TokenType::Star => TokenKind::Star,
+            TokenType::Percent => TokenKind::Percent,
+            TokenType::Pipe => TokenKind::Pipe,
+            TokenType::Bang => TokenKind::Bang,
+            TokenType::BangEqual => TokenKind::BangEqual,
+            TokenType::Equal => TokenKind::Equal,
+            TokenType::EqualEqual => TokenKind::EqualEqual,
+            TokenType::Greater => TokenKind::Greater,
+            TokenType::GreaterEqual => TokenKind::GreaterEqual,
+            TokenType::Less => TokenKind::Less,
+            TokenType::LessEqual => TokenKind::LessEqual,
+            TokenType::IdentifierLiteral(_) => TokenKind::IdentifierLiteral,
+            TokenType::StringLiteral(_) => TokenKind::StringLiteral,
+            TokenType::NumberLiteral(_) => TokenKind::NumberLiteral,
+            TokenType::And => TokenKind::And,
+            TokenType::Or => TokenKind::Or,
+            TokenType::If => TokenKind::If,
+            TokenType::Else => TokenKind::Else,
+            TokenType::For => TokenKind::For,
+            TokenType::While => TokenKind::While,
+            TokenType::Print => TokenKind::Print,
+            TokenType::Return => TokenKind::Return,
+            TokenType::Var => TokenKind::Var,
+            TokenType::Type => TokenKind::Type,
+            TokenType::Number => TokenKind::Number,
+            TokenType::String => TokenKind::String,
+            TokenType::Bool => TokenKind::Bool,
+            TokenType::True => TokenKind::True,
+            TokenType::False => TokenKind::False,
+            TokenType::Use => TokenKind::Use,
+            TokenType::From => TokenKind::From,
+            TokenType::Fun => TokenKind::Fun,
+            TokenType::Struct => TokenKind::Struct,
+            TokenType::This => TokenKind::This,
+            TokenType::Nil => TokenKind::Nil,
+            TokenType::Eof => TokenKind::Eof,
+            TokenType::UnterminatedString => TokenKind::UnterminatedString,
+            TokenType::Unknown(_) => TokenKind::Unknown,
         }
     }
 }
@@ -250,6 +260,7 @@ impl Display for TokenKind {
                 TokenKind::For => "for",
                 TokenKind::While => "while",
                 TokenKind::Print => "print",
+                TokenKind::Return => "return",
                 TokenKind::Var => "var",
                 TokenKind::Type => "type",
                 TokenKind::Number => "number",
@@ -258,10 +269,10 @@ impl Display for TokenKind {
                 TokenKind::True => "true",
                 TokenKind::False => "false",
                 TokenKind::Use => "use",
-                TokenKind::Export => "export",
                 TokenKind::From => "from",
                 TokenKind::Fun => "fun",
                 TokenKind::Struct => "struct",
+                TokenKind::This => "this",
                 TokenKind::Nil => "nil",
                 TokenKind::Eof => "<Eof>",
                 TokenKind::UnterminatedString => "<UnterminatedString>",

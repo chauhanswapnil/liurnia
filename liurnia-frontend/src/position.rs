@@ -1,45 +1,83 @@
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Default)]
-pub struct BytePos(pub u32);
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Eq, Ord)]
+pub struct LineColumn {
+    pub line: u32,
+    pub column: u32,
+}
 
-impl BytePos {
-    pub fn shift(self, ch: char) -> Self {
-        BytePos(self.0 + ch.len_utf8() as u32)
+impl Default for LineColumn {
+    fn default() -> Self {
+        Self { line: 1, column: 0 }
+    }
+}
+
+impl LineColumn {
+    pub fn shift(&self, c: char) -> LineColumn {
+        match c {
+            '\n' => LineColumn {
+                line: self.line + 1,
+                column: 0,
+            },
+            _ => LineColumn {
+                line: self.line,
+                column: self.column + 1,
+            },
+        }
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Span {
-    pub start: BytePos,
-    pub end: BytePos,
+    pub start: LineColumn,
+    pub end: LineColumn,
 }
 
 impl Span {
-    pub unsafe fn new_unchecked(start: u32, end: u32) -> Self {
-        Span {
-            start: BytePos(start),
-            end: BytePos(end),
-        }
+    pub unsafe fn new_unchecked(start: LineColumn, end: LineColumn) -> Self {
+        Span { start, end }
     }
 
     pub const fn empty() -> Self {
         Span {
-            start: BytePos(0),
-            end: BytePos(0),
+            start: LineColumn { line: 1, column: 0 },
+            end: LineColumn { line: 1, column: 0 },
         }
     }
 
     pub fn union_span(a: Self, b: Self) -> Self {
-        use std::cmp;
-
-        Span {
-            start: cmp::min(a.start, b.start),
-            end: cmp::max(a.end, b.end),
-        }
+        let start = LineColumn {
+            line: std::cmp::min(a.start.line, b.start.line),
+            column: std::cmp::min(a.start.column, b.start.column),
+        };
+        let end = LineColumn {
+            line: std::cmp::max(a.end.line, b.end.line),
+            column: std::cmp::max(a.end.column, b.end.column),
+        };
+        Span { start, end }
     }
 
     pub fn union<A, B>(a: &WithSpan<A>, b: &WithSpan<B>) -> Self {
         Self::union_span(a.into(), b.into())
     }
+
+    pub fn easy_span_create(s: (u32, u32), e: (u32, u32)) -> Self {
+        Span {
+            start: LineColumn {
+                line: s.0,
+                column: s.1,
+            },
+            end: LineColumn {
+                line: e.0,
+                column: e.1,
+            },
+        }
+    }
+}
+
+// We use this wrapper for every AST Node
+#[derive(Debug, PartialEq, Clone)]
+pub struct WithSpan<T> {
+    pub value: T,
+    pub span: Span,
 }
 
 impl<T> From<WithSpan<T>> for Span {
@@ -54,12 +92,6 @@ impl<T> From<&WithSpan<T>> for Span {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct WithSpan<T> {
-    pub value: T,
-    pub span: Span,
-}
-
 impl<T> WithSpan<T> {
     pub const fn new(value: T, span: Span) -> Self {
         WithSpan { value, span }
@@ -69,8 +101,8 @@ impl<T> WithSpan<T> {
         Self {
             value,
             span: Span {
-                start: BytePos(0),
-                end: BytePos(0),
+                start: LineColumn { line: 1, column: 0 },
+                end: LineColumn { line: 1, column: 0 },
             },
         }
     }
@@ -79,8 +111,8 @@ impl<T> WithSpan<T> {
         Self {
             value,
             span: Span {
-                start: BytePos(start),
-                end: BytePos(end),
+                start: LineColumn { line: 1, column: 0 },
+                end: LineColumn { line: 1, column: 0 },
             },
         }
     }
@@ -97,35 +129,4 @@ impl<T> WithSpan<T> {
 pub struct Diagnostic {
     pub span: Span,
     pub message: String,
-}
-
-pub struct LineOffsets {
-    offsets: Vec<u32>,
-    len: u32,
-}
-
-impl LineOffsets {
-    pub fn new(data: &str) -> Self {
-        let mut offsets = vec![0];
-        let len = data.len() as u32;
-
-        for (i, val) in data.bytes().enumerate() {
-            if val == b'\n' {
-                offsets.push((i + 1) as u32);
-            }
-        }
-
-        Self { offsets, len }
-    }
-
-    pub fn line(&self, pos: BytePos) -> usize {
-        let offset = pos.0;
-
-        assert!(offset <= self.len);
-
-        match self.offsets.binary_search(&offset) {
-            Ok(line) => line + 1,
-            Err(line) => line,
-        }
-    }
 }
