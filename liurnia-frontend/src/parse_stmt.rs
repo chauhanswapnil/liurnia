@@ -2,7 +2,7 @@ use crate::ast::{Expr, Program, Stmt, UseStatement};
 use crate::common::{expect_identifier, expect_string};
 use crate::parser::Parser;
 use crate::position::{Span, WithSpan};
-use crate::token::{TokenKind};
+use crate::token::TokenKind;
 
 pub fn parse_program(parser: &mut Parser) -> Result<Program, ()> {
     let use_statements = parse_use_statements(parser);
@@ -96,7 +96,6 @@ mod tests {
     use crate::parser::Parser;
     use crate::position::{Span, WithSpan};
     use crate::tokenizer::tokenize_with_context;
-    
 
     #[test]
     fn test_use_stmt() {
