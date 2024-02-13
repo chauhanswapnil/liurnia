@@ -23,7 +23,7 @@ pub fn parse(code: &str) -> Result<Program, Vec<Diagnostic>> {
     let parsed_program = parse_program(&mut parser);
     println!("Parsed Program: {:#?}", parsed_program);
     println!("Diagnostics: {:#?}", parser.diagnostics().to_vec());
-    match (parsed_program) {
+    match parsed_program {
         Ok(program) if parser.diagnostics().is_empty() => Ok(program),
         Ok(_) => Err(parser.diagnostics().to_vec()),
         Err(_) => Err(parser.diagnostics().to_vec()),
