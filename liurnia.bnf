@@ -1,0 +1,43 @@
+<Program> ::= "Module" "(" <UseStatement>* "," <Stmt>* ")"
+
+<UseStatement> ::= "Use" "(" <StringLiteral> "," <Identifier> ")"
+
+<Stmt> ::= "Variable" "(" <Identifier> "," <TypeAnnotation> "," <Expr>? ")"
+         | "Function" "(" <Identifier> "," <Parameters>? "," <Stmt> ")"
+         | "Struct" "(" <Identifier> "," <StructField>* "," <Stmt>? ")"
+         | "ExpressionStatement" "(" <Expr> ")"
+         | "IfStatement" "(" <Expr> "," <Stmt> "," <Stmt>? ")"
+         | "WhileStatement" "(" <Expr> "," <Stmt> ")"
+         | "ForStatement" "(" <Stmt>? "," <Expr>? "," <Expr>? "," <Stmt> ")"
+         | "ReturnStatement" "(" <Expr>? ")"
+         | "Block" "(" <Stmt>* ")"
+
+<TypeAnnotation> ::= "NumberType" | "StringType" | "BoolType" | "AnyType" | "IdentifierType" "(" <Identifier> ")" | "UnionType" "(" <TypeAnnotation>+ ")"
+
+<StructField> ::= "{" "name" ":" <Identifier> "," "annotation" ":" <TypeAnnotation> "," "value" ":" <Expr>? "}"
+
+<Expr> ::= "Binary" "(" <Expr> "," <BinaryOperator> "," <Expr> ")"
+         | "NumberLiteral" "(" <f64> ")"
+         | "StringLiteral" "(" <String> ")"
+         | "BooleanLiteral" "(" <bool> ")"
+         | "NilLiteral"
+         | "This"
+         | "Grouping" "(" <Expr> ")"
+         | "Unary" "(" <UnaryOperator> "," <Expr> ")"
+         | "Logical" "(" <Expr> "," <LogicalOperator> "," <Expr> ")"
+         | "Variable" "(" <Identifier> ")"
+         | "Assignment" "(" <Identifier> "," <Expr> ")"
+         | "Call" "(" <Expr> "," <Expr>* ")"
+         | "Get" "(" <Expr> "," <Identifier> ")"
+         | "Set" "(" <Expr> "," <Identifier> "," <Expr> ")"
+
+<Parameters> ::= "{" "parameters" ":" <Parameter>+ "}"
+
+<Parameter> ::= "NamedParameter" "(" <Identifier> "," <TypeAnnotation> ")"
+             | "UnionType" "(" <TypeAnnotation>+ ")"
+
+<UnaryOperator> ::= "Bang" | "Minus"
+
+<BinaryOperator> ::= "Plus" | "Minus" | "Slash" | "Star" | "Percent" | "Greater" | "GreaterEqual" | "Less" | "LessEqual" | "BangEqual" | "EqualEqual"
+
+<LogicalOperator> ::= "And" | "Or"

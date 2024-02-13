@@ -5,15 +5,16 @@ use crate::position::{Span, WithSpan};
 use crate::token::TokenKind;
 
 pub fn parse_program(parser: &mut Parser) -> Result<Program, ()> {
-    let use_statements = parse_use_statements(parser);
-    let _statements = parse_declarations(parser);
-    Ok(Program::Module(use_statements?, Vec::new()))
-    // parse_statements(parser);
+    let use_statements = parse_use_statements(parser)?;
+    let statements = parse_declarations(parser)?;
+    // println!("Use Statements: {:#?}", use_statements);
+    // println!("Other Statements: {:#?}", statements);
+    Ok(Program::Module(use_statements, statements))
 }
 
 fn parse_use_statements(parser: &mut Parser) -> Result<Vec<WithSpan<UseStatement>>, ()> {
     let mut use_statements = Vec::new();
-    while parser.check(TokenKind::Use) || parser.is_eof() {
+    while parser.check(TokenKind::Use) {
         let begin_token = parser.expect(TokenKind::Use)?;
         let use_identifier = expect_identifier(parser)?;
         let _from_token = parser.expect(TokenKind::From)?;

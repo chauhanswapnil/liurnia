@@ -1,4 +1,3 @@
-fun main() {
-    var a = "100";
-    return a;
-}
+use add from "add.li";
+
+return "Hello World";

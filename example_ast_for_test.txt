@@ -1,0 +1,82 @@
+AST FOR:
+use add from "add.li";
+return "Hello World";
+
+Module(
+        [
+            WithSpan {
+                value: Use(
+                    WithSpan {
+                        value: "add",
+                        span: Span {
+                            start: LineColumn {
+                                line: 1,
+                                column: 4,
+                            },
+                            end: LineColumn {
+                                line: 1,
+                                column: 7,
+                            },
+                        },
+                    },
+                    WithSpan {
+                        value: "add.li",
+                        span: Span {
+                            start: LineColumn {
+                                line: 1,
+                                column: 13,
+                            },
+                            end: LineColumn {
+                                line: 1,
+                                column: 21,
+                            },
+                        },
+                    },
+                ),
+                span: Span {
+                    start: LineColumn {
+                        line: 1,
+                        column: 0,
+                    },
+                    end: LineColumn {
+                        line: 1,
+                        column: 22,
+                    },
+                },
+            },
+        ],
+        [
+            WithSpan {
+                value: ReturnStatement(
+                    Some(
+                        WithSpan {
+                            value: StringLiteral(
+                                "Hello World",
+                            ),
+                            span: Span {
+                                start: LineColumn {
+                                    line: 3,
+                                    column: 7,
+                                },
+                                end: LineColumn {
+                                    line: 3,
+                                    column: 20,
+                                },
+                            },
+                        },
+                    ),
+                ),
+                span: Span {
+                    start: LineColumn {
+                        line: 3,
+                        column: 0,
+                    },
+                    end: LineColumn {
+                        line: 3,
+                        column: 21,
+                    },
+                },
+            },
+        ],
+    ),
+)

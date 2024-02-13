@@ -63,7 +63,7 @@ fn parse_prefix(parser: &mut Parser) -> Result<WithSpan<Expr>, ()> {
         | TokenKind::True
         | TokenKind::False
         | TokenKind::IdentifierLiteral
-        | TokenKind::String => parse_primary(parser),
+        | TokenKind::StringLiteral => parse_primary(parser),
         TokenKind::Bang | TokenKind::Minus => parse_unary(parser),
         TokenKind::LeftParen => parse_grouping(parser),
         _ => {
