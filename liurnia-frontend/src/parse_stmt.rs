@@ -32,12 +32,16 @@ fn parse_use_statements(parser: &mut Parser) -> Result<Vec<WithSpan<UseStatement
 fn parse_declarations(parser: &mut Parser) -> Result<Vec<WithSpan<Stmt>>, ()> {
     let mut statements = Vec::new();
     while !parser.is_eof() {
-        statements.push(match parser.peek() {
-            // TokenKind::Var => parse_var_declaration(parser)?,
-            _ => parse_statement(parser)?,
-        })
+        statements.push(parse_declaration(parser)?);
     }
     Ok(statements)
+}
+
+fn parse_declaration(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
+    match parser.peek() {
+        // TokenKind::Var => parse_var_declaration(parser)?,
+        _ => parse_statement(parser),
+    }
 }
 
 fn parse_expr(parser: &mut Parser) -> Result<WithSpan<Expr>, ()> {
@@ -58,10 +62,10 @@ fn parse_expr_statement(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
 fn parse_statement(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
     match parser.peek() {
         TokenKind::Return => parse_return_statement(parser),
-        // TokenKind::If => parse_if_statement(parser),
-        // TokenKind::While => parse_while_statement(parser),
+        TokenKind::If => parse_if_statement(parser),
+        TokenKind::While => parse_while_statement(parser),
         // TokenKind::For => parse_for_statement(parser),
-        // TokenKind::LeftBrace => parse_block_statement(parser),
+        TokenKind::LeftBrace => parse_block_statement(parser),
         TokenKind::Use => {
             parser.error(
                 "Unexpected `use statement`. Imports can only happen at the start of the file.",
@@ -69,12 +73,34 @@ fn parse_statement(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
             );
             Err(())
         }
-        _ => {
-            parser.error("Expressions not implemented yet", parser.peek_token().span);
-            Err(())
-        }
         _ => parse_expr_statement(parser),
     }
+}
+
+fn parse_while_statement(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
+    let begin_token = parser.expect(TokenKind::While)?;
+    parser.expect(TokenKind::LeftParen)?;
+    let condition = parse_expr(parser)?;
+    parser.expect(TokenKind::RightParen)?;
+    let while_block = parse_block_statement(parser)?;
+    let end_span = while_block.span;
+    Ok(WithSpan::new(
+        Stmt::WhileStatement(Box::new(condition), Box::new(while_block)),
+        Span::union_span(begin_token.span, end_span),
+    ))
+}
+
+fn parse_block_statement(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
+    let begin_token = parser.expect(TokenKind::LeftBrace)?;
+    let mut statements: Vec<WithSpan<Stmt>> = Vec::new();
+    while !parser.check(TokenKind::RightBrace) {
+        statements.push(parse_declaration(parser)?);
+    }
+    let end_token = parser.expect(TokenKind::RightBrace)?;
+    Ok(WithSpan::new(
+        Stmt::Block(statements),
+        Span::union_span(begin_token.span, end_token.span),
+    ))
 }
 
 fn parse_return_statement(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
@@ -87,6 +113,29 @@ fn parse_return_statement(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
     Ok(WithSpan::new(
         Stmt::ReturnStatement(expr.map(Box::new)),
         Span::union_span(begin_token.span, end_token.span),
+    ))
+}
+
+fn parse_if_statement(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
+    let begin_token = parser.expect(TokenKind::If)?;
+    parser.expect(TokenKind::LeftParen)?;
+    let condition = parse_expr(parser)?;
+    parser.expect(TokenKind::RightParen)?;
+    let if_body = parse_statement(parser)?;
+    let mut end_span = if_body.span;
+    let mut else_body: Option<WithSpan<Stmt>> = None;
+    if parser.optionally(TokenKind::Else)? {
+        let stmt = parse_statement(parser)?;
+        end_span = stmt.span;
+        else_body = Some(stmt);
+    }
+    Ok(WithSpan::new(
+        Stmt::IfStatement(
+            Box::new(condition),
+            Box::new(if_body),
+            else_body.map(Box::new),
+        ),
+        Span::union_span(begin_token.span, end_span),
     ))
 }
 
