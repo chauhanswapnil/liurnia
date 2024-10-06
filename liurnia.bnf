@@ -1,43 +1,78 @@
-<Program> ::= "Module" "(" <UseStatement>* "," <Stmt>* ")"
+<program> ::= <use_statements> <statements>
 
-<UseStatement> ::= "Use" "(" <StringLiteral> "," <Identifier> ")"
+<use_statements> ::= <use_statement> | <use_statement> <use_statements>
+<use_statement> ::= "use" <string> "as" <identifier>
 
-<Stmt> ::= "Variable" "(" <Identifier> "," <TypeAnnotation> "," <Expr>? ")"
-         | "Function" "(" <Identifier> "," <Parameters>? "," <Stmt> ")"
-         | "Struct" "(" <Identifier> "," <StructField>* "," <Stmt>? ")"
-         | "ExpressionStatement" "(" <Expr> ")"
-         | "IfStatement" "(" <Expr> "," <Stmt> "," <Stmt>? ")"
-         | "WhileStatement" "(" <Expr> "," <Stmt> ")"
-         | "ForStatement" "(" <Stmt>? "," <Expr>? "," <Expr>? "," <Stmt> ")"
-         | "ReturnStatement" "(" <Expr>? ")"
-         | "Block" "(" <Stmt>* ")"
+<statements> ::= <stmt> | <stmt> <statements>
 
-<TypeAnnotation> ::= "NumberType" | "StringType" | "BoolType" | "AnyType" | "IdentifierType" "(" <Identifier> ")" | "UnionType" "(" <TypeAnnotation>+ ")"
+<stmt> ::= <variable_decl>
+         | <function_decl>
+         | <struct_decl>
+         | <expression_stmt>
+         | <if_stmt>
+         | <while_stmt>
+         | <for_stmt>
+         | <return_stmt>
+         | <block_stmt>
 
-<StructField> ::= "{" "name" ":" <Identifier> "," "annotation" ":" <TypeAnnotation> "," "value" ":" <Expr>? "}"
+<variable_decl> ::= "var" <identifier> ":" <type_annotation> ["=" <expr>] ";"
+<function_decl> ::= "fn" <identifier> "(" [<parameters>] ")" <stmt>
+<struct_decl> ::= "struct" <identifier> "{" <struct_fields> "}"
+<expression_stmt> ::= <expr> ";"
+<if_stmt> ::= "if" <expr> <stmt> ["else" <stmt>]
+<while_stmt> ::= "while" <expr> <stmt>
+<for_stmt> ::= "for" "(" [<stmt>] ";" [<expr>] ";" [<expr>] ")" <stmt>
+<return_stmt> ::= "return" [<expr>] ";"
+<block_stmt> ::= "{" <statements> "}"
 
-<Expr> ::= "Binary" "(" <Expr> "," <BinaryOperator> "," <Expr> ")"
-         | "NumberLiteral" "(" <f64> ")"
-         | "StringLiteral" "(" <String> ")"
-         | "BooleanLiteral" "(" <bool> ")"
-         | "NilLiteral"
-         | "This"
-         | "Grouping" "(" <Expr> ")"
-         | "Unary" "(" <UnaryOperator> "," <Expr> ")"
-         | "Logical" "(" <Expr> "," <LogicalOperator> "," <Expr> ")"
-         | "Variable" "(" <Identifier> ")"
-         | "Assignment" "(" <Identifier> "," <Expr> ")"
-         | "Call" "(" <Expr> "," <Expr>* ")"
-         | "Get" "(" <Expr> "," <Identifier> ")"
-         | "Set" "(" <Expr> "," <Identifier> "," <Expr> ")"
+<struct_fields> ::= <struct_field> | <struct_field> <struct_fields>
+<struct_field> ::= <identifier> ":" <type_annotation> ["=" <expr>] ";"
 
-<Parameters> ::= "{" "parameters" ":" <Parameter>+ "}"
+<parameters> ::= <parameter> | <parameter> "," <parameters>
+<parameter> ::= <identifier> ":" <type_annotation>
 
-<Parameter> ::= "NamedParameter" "(" <Identifier> "," <TypeAnnotation> ")"
-             | "UnionType" "(" <TypeAnnotation>+ ")"
+<type_annotation> ::= "Number"
+                    | "String"
+                    | "Bool"
+                    | "Any"
+                    | <identifier>
 
-<UnaryOperator> ::= "Bang" | "Minus"
+<expr> ::= <binary_expr>
+         | <logical_expr>
+         | <unary_expr>
+         | <primary_expr>
+         | <assignment_expr>
+         | <call_expr>
+         | <get_expr>
+         | <set_expr>
 
-<BinaryOperator> ::= "Plus" | "Minus" | "Slash" | "Star" | "Percent" | "Greater" | "GreaterEqual" | "Less" | "LessEqual" | "BangEqual" | "EqualEqual"
+<binary_expr> ::= <expr> <binary_operator> <expr>
+<logical_expr> ::= <expr> <logical_operator> <expr>
+<unary_expr> ::= <unary_operator> <expr>
+<assignment_expr> ::= <identifier> "=" <expr>
+<call_expr> ::= <expr> "(" [<arguments>] ")"
+<get_expr> ::= <expr> "." <identifier>
+<set_expr> ::= <expr> "." <identifier> "=" <expr>
 
-<LogicalOperator> ::= "And" | "Or"
+<arguments> ::= <expr> | <expr> "," <arguments>
+
+<primary_expr> ::= <number_literal>
+                 | <string_literal>
+                 | <boolean_literal>
+                 | "nil"
+                 | "this"
+                 | "(" <expr> ")"
+
+<binary_operator> ::= "+" | "-" | "/" | "*" | "%" | ">" | ">=" | "<" | "<=" | "!=" | "=="
+<logical_operator> ::= "and" | "or"
+<unary_operator> ::= "!" | "-"
+
+<number_literal> ::= <float>
+<string_literal> ::= "\"" <string_content> "\""
+<boolean_literal> ::= "true" | "false"
+
+<identifier> ::= <string>  ; Identifiers are typically strings but should adhere to variable naming conventions
+<string> ::= (A-Za-z_)(A-Za-z0-9_)*
+<float> ::= [0-9]+ ("." [0-9]+)?
+<string_content> ::= any valid string content
+

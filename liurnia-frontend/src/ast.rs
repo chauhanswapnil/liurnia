@@ -101,7 +101,6 @@ pub enum TypeAnnotation {
     BoolType,
     AnyType,
     IdentifierType(Identifier),
-    UnionType(Vec<TypeAnnotation>),
 }
 
 #[derive(Debug, PartialEq, Clone)]
