@@ -1,5 +1,6 @@
-use crate::ast::{Expr, Program, Stmt, UseStatement};
-use crate::common::{expect_identifier, expect_string};
+use crate::ast::{Expr, Program, Stmt, TypeAnnotation, UseStatement};
+use crate::common::{expect_identifier, expect_identifier_no_span, expect_string};
+use crate::parse_expr;
 use crate::parser::Parser;
 use crate::position::{Span, WithSpan};
 use crate::token::TokenKind;
@@ -39,7 +40,7 @@ fn parse_declarations(parser: &mut Parser) -> Result<Vec<WithSpan<Stmt>>, ()> {
 
 fn parse_declaration(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
     match parser.peek() {
-        // TokenKind::Var => parse_var_declaration(parser)?,
+        TokenKind::Var => parse_var_declaration(parser),
         _ => parse_statement(parser),
     }
 }
@@ -59,12 +60,59 @@ fn parse_expr_statement(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
     ))
 }
 
+fn parse_var_declaration(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
+    let begin_token = parser.expect(TokenKind::Var)?;
+    let var_identifier = expect_identifier(parser)?;
+    let colon = parser.expect(TokenKind::Colon)?;
+    let type_annotation = parse_type_annotation(parser)?;
+    let equals = parser.expect(TokenKind::Equal)?;
+    let expr = parse_expr(parser)?;
+    let end_token = parser.expect(TokenKind::Semicolon)?;
+    Ok(WithSpan {
+        value: Stmt::Variable(var_identifier, type_annotation, Some(Box::new(expr))),
+        span: Span::union_span(begin_token.span, end_token.span),
+    })
+}
+
+fn parse_type_annotation(parser: &mut Parser) -> Result<WithSpan<TypeAnnotation>, ()> {
+    let type_annotation = match parser.peek() {
+        TokenKind::Number => {
+            let token = parser.advance();
+            WithSpan {
+                value: TypeAnnotation::Number,
+                span: token.span,
+            }
+        }
+        TokenKind::String => {
+            let token = parser.advance();
+            WithSpan {
+                value: TypeAnnotation::String,
+                span: token.span,
+            }
+        }
+        TokenKind::Bool => {
+            let token = parser.advance();
+            WithSpan {
+                value: TypeAnnotation::Bool,
+                span: token.span,
+            }
+        }
+        _ => {
+            let ident = expect_identifier(parser)?;
+            WithSpan {
+                value: TypeAnnotation::Identifier(ident.value),
+                span: ident.span,
+            }
+        }
+    };
+    Ok(type_annotation)
+}
+
 fn parse_statement(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
     match parser.peek() {
         TokenKind::Return => parse_return_statement(parser),
         TokenKind::If => parse_if_statement(parser),
         TokenKind::While => parse_while_statement(parser),
-        // TokenKind::For => parse_for_statement(parser),
         TokenKind::LeftBrace => parse_block_statement(parser),
         TokenKind::Use => {
             parser.error(

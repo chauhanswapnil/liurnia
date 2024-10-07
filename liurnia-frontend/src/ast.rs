@@ -96,11 +96,10 @@ pub enum Expr {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum TypeAnnotation {
-    NumberType,
-    StringType,
-    BoolType,
-    AnyType,
-    IdentifierType(Identifier),
+    Number,
+    String,
+    Bool,
+    Identifier(Identifier),
 }
 
 #[derive(Debug, PartialEq, Clone)]

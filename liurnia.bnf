@@ -1,7 +1,7 @@
 <program> ::= <use_statements> <statements>
 
 <use_statements> ::= <use_statement> | <use_statement> <use_statements>
-<use_statement> ::= "use" <string> "as" <identifier>
+<use_statement> ::= "use" <identifier> "from" <string> ";"
 
 <statements> ::= <stmt> | <stmt> <statements>
 
@@ -11,7 +11,6 @@
          | <expression_stmt>
          | <if_stmt>
          | <while_stmt>
-         | <for_stmt>
          | <return_stmt>
          | <block_stmt>
 
@@ -21,7 +20,6 @@
 <expression_stmt> ::= <expr> ";"
 <if_stmt> ::= "if" <expr> <stmt> ["else" <stmt>]
 <while_stmt> ::= "while" <expr> <stmt>
-<for_stmt> ::= "for" "(" [<stmt>] ";" [<expr>] ";" [<expr>] ")" <stmt>
 <return_stmt> ::= "return" [<expr>] ";"
 <block_stmt> ::= "{" <statements> "}"
 

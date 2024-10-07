@@ -25,6 +25,7 @@ pub enum TokenType {
     Star,         // *
     Percent,      // %
     Pipe,         // |
+    Colon,        // :
 
     // One or two character tokens.
     Bang,         // !
@@ -48,7 +49,6 @@ pub enum TokenType {
     If,   // if
     Else, // else
 
-    For,   // for
     While, // while
 
     // Keeping this as a keyword for now,
@@ -100,6 +100,7 @@ pub enum TokenKind {
     Star,         // *
     Percent,      // %
     Pipe,         // |
+    Colon,        // :
 
     // One or two character tokens.
     Bang,         // !
@@ -123,7 +124,6 @@ pub enum TokenKind {
     If,   // if
     Else, // else
 
-    For,   // for
     While, // while
 
     // Keeping this as a keyword for now,
@@ -182,6 +182,7 @@ impl From<&TokenType> for TokenKind {
             TokenType::Star => TokenKind::Star,
             TokenType::Percent => TokenKind::Percent,
             TokenType::Pipe => TokenKind::Pipe,
+            TokenType::Colon => TokenKind::Colon,
             TokenType::Bang => TokenKind::Bang,
             TokenType::BangEqual => TokenKind::BangEqual,
             TokenType::Equal => TokenKind::Equal,
@@ -197,7 +198,6 @@ impl From<&TokenType> for TokenKind {
             TokenType::Or => TokenKind::Or,
             TokenType::If => TokenKind::If,
             TokenType::Else => TokenKind::Else,
-            TokenType::For => TokenKind::For,
             TokenType::While => TokenKind::While,
             TokenType::Print => TokenKind::Print,
             TokenType::Return => TokenKind::Return,
@@ -242,6 +242,7 @@ impl Display for TokenKind {
                 TokenKind::Star => "*",
                 TokenKind::Percent => "%",
                 TokenKind::Pipe => "|",
+                TokenKind::Colon => ":",
                 TokenKind::Bang => "!",
                 TokenKind::BangEqual => "!=",
                 TokenKind::Equal => "=",
@@ -257,7 +258,6 @@ impl Display for TokenKind {
                 TokenKind::Or => "or",
                 TokenKind::If => "if",
                 TokenKind::Else => "else",
-                TokenKind::For => "for",
                 TokenKind::While => "while",
                 TokenKind::Print => "print",
                 TokenKind::Return => "return",
