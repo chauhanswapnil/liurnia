@@ -16,7 +16,7 @@ pub enum UseStatement {
 pub enum Stmt {
     Variable(
         WithSpan<Identifier>,
-        WithSpan<TypeAnnotation>,
+        Option<WithSpan<TypeAnnotation>>,
         Option<Box<WithSpan<Expr>>>,
     ),
     Function(

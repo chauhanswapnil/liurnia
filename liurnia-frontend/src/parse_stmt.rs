@@ -1,6 +1,5 @@
 use crate::ast::{Expr, Program, Stmt, TypeAnnotation, UseStatement};
-use crate::common::{expect_identifier, expect_identifier_no_span, expect_string};
-use crate::parse_expr;
+use crate::common::{expect_identifier, expect_string};
 use crate::parser::Parser;
 use crate::position::{Span, WithSpan};
 use crate::token::TokenKind;
@@ -8,8 +7,6 @@ use crate::token::TokenKind;
 pub fn parse_program(parser: &mut Parser) -> Result<Program, ()> {
     let use_statements = parse_use_statements(parser)?;
     let statements = parse_declarations(parser)?;
-    // println!("Use Statements: {:#?}", use_statements);
-    // println!("Other Statements: {:#?}", statements);
     Ok(Program::Module(use_statements, statements))
 }
 
@@ -63,13 +60,17 @@ fn parse_expr_statement(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
 fn parse_var_declaration(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
     let begin_token = parser.expect(TokenKind::Var)?;
     let var_identifier = expect_identifier(parser)?;
-    let colon = parser.expect(TokenKind::Colon)?;
-    let type_annotation = parse_type_annotation(parser)?;
-    let equals = parser.expect(TokenKind::Equal)?;
-    let expr = parse_expr(parser)?;
+    let mut type_annotation = None;
+    if parser.optionally(TokenKind::Colon)? {
+        type_annotation = Some(parse_type_annotation(parser)?);
+    }
+    let mut expr = None;
+    if parser.optionally(TokenKind::Equal)? {
+        expr = Some(parse_expr(parser)?);
+    }
     let end_token = parser.expect(TokenKind::Semicolon)?;
     Ok(WithSpan {
-        value: Stmt::Variable(var_identifier, type_annotation, Some(Box::new(expr))),
+        value: Stmt::Variable(var_identifier, type_annotation, expr.map(Box::new)),
         span: Span::union_span(begin_token.span, end_token.span),
     })
 }

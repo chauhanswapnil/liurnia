@@ -143,6 +143,7 @@ impl<'a> Lexer<'a> {
             '*' => Some(TokenType::Star),
             '%' => Some(TokenType::Percent),
             '|' => Some(TokenType::Pipe),
+            ':' => Some(TokenType::Colon),
             c => Some(TokenType::Unknown(c)),
         }
     }

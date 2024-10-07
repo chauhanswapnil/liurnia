@@ -15,7 +15,6 @@ enum Precedence {
     Factor,     // * / %
     Unary,      // ! -
     Call,       // ()
-    Primary,
 }
 
 impl<'a> From<TokenKind> for Precedence {

@@ -17,7 +17,7 @@ fn main() {
                 if input.is_empty() {
                     continue; // Skip empty lines
                 }
-                parse(input);
+                let _ = parse(input);
             } else {
                 break; // Exit on error
             }
@@ -32,7 +32,7 @@ fn main() {
         // Read file content
         match std::fs::read_to_string(path) {
             Ok(data) => {
-                parse(&data);
+                let _ = parse(&data);
             }
             Err(err) => {
                 eprintln!("Error reading file: {}", err);

@@ -21,24 +21,6 @@ pub fn expect_identifier(p: &mut Parser) -> Result<WithSpan<Identifier>, ()> {
     }
 }
 
-pub fn expect_identifier_no_span(p: &mut Parser) -> Result<Identifier, ()> {
-    let token = p.advance();
-    match &token.token_type {
-        TokenType::IdentifierLiteral(ident) => Ok(ident.clone()),
-        _ => {
-            p.error(
-                &format!(
-                    "Expected {} got {}",
-                    TokenKind::IdentifierLiteral,
-                    token.token_type
-                ),
-                token.span,
-            );
-            Err(())
-        }
-    }
-}
-
 pub fn expect_string(p: &mut Parser) -> Result<WithSpan<String>, ()> {
     let token = p.advance();
     match &token.token_type {
