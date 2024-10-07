@@ -162,7 +162,6 @@ impl<'a> Lexer<'a> {
         keywords.insert("or", TokenType::Or);
         keywords.insert("if", TokenType::If);
         keywords.insert("else", TokenType::Else);
-        keywords.insert("for", TokenType::For);
         keywords.insert("while", TokenType::While);
         keywords.insert("print", TokenType::Print);
         keywords.insert("return", TokenType::Return);
