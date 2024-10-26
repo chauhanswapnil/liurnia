@@ -1,4 +1,4 @@
-use crate::ast::{Expr, Program, Stmt, TypeAnnotation, UseStatement};
+use crate::ast::{Expr, Parameter, Program, Stmt, StructField, TypeAnnotation, UseStatement};
 use crate::common::{expect_identifier, expect_string};
 use crate::parser::Parser;
 use crate::position::{Span, WithSpan};
@@ -38,6 +38,8 @@ fn parse_declarations(parser: &mut Parser) -> Result<Vec<WithSpan<Stmt>>, ()> {
 fn parse_declaration(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
     match parser.peek() {
         TokenKind::Var => parse_var_declaration(parser),
+        TokenKind::Fun => parse_fun_declaration(parser),
+        TokenKind::Struct => parse_struct_declaration(parser),
         _ => parse_statement(parser),
     }
 }
@@ -71,6 +73,99 @@ fn parse_var_declaration(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
     let end_token = parser.expect(TokenKind::Semicolon)?;
     Ok(WithSpan {
         value: Stmt::Variable(var_identifier, type_annotation, expr.map(Box::new)),
+        span: Span::union_span(begin_token.span, end_token.span),
+    })
+}
+
+fn parse_struct_declaration(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
+    let begin_token = parser.expect(TokenKind::Struct)?;
+    let struct_name = expect_identifier(parser)?;
+    parser.expect(TokenKind::LeftBrace)?;
+    let mut var_declarations: Vec<WithSpan<StructField>> = Vec::new();
+    while !parser.check(TokenKind::RightBrace) {
+        let var_identifier = expect_identifier(parser)?;
+        let mut type_annotation = None;
+        if parser.optionally(TokenKind::Colon)? {
+            type_annotation = Some(parse_type_annotation(parser)?);
+        }
+        let mut expr = None;
+        if parser.optionally(TokenKind::Equal)? {
+            expr = Some(parse_expr(parser)?);
+        }
+        let end_token = parser.expect(TokenKind::Semicolon)?;
+
+        var_declarations.push(WithSpan {
+            value: StructField {
+                name: var_identifier.clone(),
+                annotation: type_annotation,
+                value: expr.map(Box::new),
+            },
+            span: Span::union_span(var_identifier.span, end_token.span),
+        });
+    }
+    let end_token = parser.expect(TokenKind::RightBrace)?;
+    Ok(WithSpan {
+        value: Stmt::Struct(struct_name, var_declarations),
+        span: Span::union_span(begin_token.span, end_token.span),
+    })
+}
+
+fn parse_fun_declaration(parser: &mut Parser) -> Result<WithSpan<Stmt>, ()> {
+    let fun_keyword = parser.expect(TokenKind::Fun)?;
+    let fun_name = expect_identifier(parser)?;
+    let parameters = parse_parameters(parser)?;
+    let mut return_type = None;
+    if parser.optionally(TokenKind::Minus)? {
+        let _ = parser.expect(TokenKind::Greater)?;
+        return_type = Some(parse_type_annotation(parser)?);
+    }
+    let fun_body_begin = parser.expect(TokenKind::LeftBrace)?;
+    let mut function_body: Vec<WithSpan<Stmt>> = Vec::new();
+    while !parser.check(TokenKind::RightBrace) {
+        function_body.push(parse_declaration(parser)?);
+    }
+    let fun_body_end = parser.expect(TokenKind::RightBrace)?;
+    Ok(WithSpan::new(
+        Stmt::Function(
+            fun_name.clone(),
+            parameters,
+            return_type,
+            WithSpan {
+                value: function_body,
+                span: Span::union_span(fun_body_begin.span, fun_body_end.span),
+            },
+        ),
+        Span::union_span(fun_keyword.span, fun_body_end.span),
+    ))
+}
+
+fn parse_parameters(parser: &mut Parser) -> Result<WithSpan<Vec<Parameter>>, ()> {
+    let mut parameters = Vec::new();
+    let begin_token = parser.expect(TokenKind::LeftParen)?;
+    while !parser.check(TokenKind::RightParen) {
+        let ident = expect_identifier(parser)?;
+        let type_annotation = if parser.optionally(TokenKind::Colon)? {
+            Some(parse_type_annotation(parser)?)
+        } else {
+            None
+        };
+        let value = if parser.optionally(TokenKind::Equal)? {
+            Some(parse_expr(parser)?)
+        } else {
+            None
+        };
+        parameters.push(Parameter {
+            name: ident,
+            annotation: type_annotation,
+            value: value.map(Box::new),
+        });
+        if !parser.optionally(TokenKind::Comma)? {
+            break;
+        }
+    }
+    let end_token = parser.expect(TokenKind::RightParen)?;
+    Ok(WithSpan {
+        value: parameters,
         span: Span::union_span(begin_token.span, end_token.span),
     })
 }

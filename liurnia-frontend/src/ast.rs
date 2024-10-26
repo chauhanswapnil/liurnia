@@ -21,41 +21,27 @@ pub enum Stmt {
     ),
     Function(
         WithSpan<Identifier>,
-        WithSpan<Option<Parameters>>,
-        Box<WithSpan<Stmt>>,
+        WithSpan<Vec<Parameter>>,
+        Option<WithSpan<TypeAnnotation>>,
+        WithSpan<Vec<WithSpan<Stmt>>>,
     ),
-    Struct(
-        WithSpan<Identifier>,
-        Vec<WithSpan<StructField>>,
-        Option<Box<WithSpan<Stmt>>>,
-    ),
-
+    Struct(WithSpan<Identifier>, Vec<WithSpan<StructField>>),
     ExpressionStatement(Box<WithSpan<Expr>>),
-
     IfStatement(
         Box<WithSpan<Expr>>,
         Box<WithSpan<Stmt>>,
         Option<Box<WithSpan<Stmt>>>,
     ),
-
     WhileStatement(Box<WithSpan<Expr>>, Box<WithSpan<Stmt>>),
-    ForStatement(
-        Option<WithSpan<Box<Stmt>>>,
-        Option<WithSpan<Expr>>,
-        Option<WithSpan<Expr>>,
-        Box<WithSpan<Stmt>>,
-    ),
-
     ReturnStatement(Option<Box<WithSpan<Expr>>>),
-
     Block(Vec<WithSpan<Stmt>>),
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct StructField {
-    pub name: Identifier,
-    pub annotation: TypeAnnotation,
-    pub value: Option<WithSpan<Expr>>,
+    pub name: WithSpan<Identifier>,
+    pub annotation: Option<WithSpan<TypeAnnotation>>,
+    pub value: Option<Box<WithSpan<Expr>>>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -104,13 +90,14 @@ pub enum TypeAnnotation {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Parameters {
-    pub parameters: Vec<Parameter>,
+    pub parameters: Vec<WithSpan<Parameter>>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum Parameter {
-    NamedParameter(Identifier, TypeAnnotation),
-    UnionType(Vec<TypeAnnotation>),
+pub struct Parameter {
+    pub name: WithSpan<Identifier>,
+    pub annotation: Option<WithSpan<TypeAnnotation>>,
+    pub value: Option<Box<WithSpan<Expr>>>,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]

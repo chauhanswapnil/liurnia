@@ -17,7 +17,7 @@ enum Precedence {
     Call,       // ()
 }
 
-impl<'a> From<TokenKind> for Precedence {
+impl From<TokenKind> for Precedence {
     fn from(token: TokenKind) -> Precedence {
         match token {
             TokenKind::Equal => Precedence::Assign,
@@ -115,18 +115,18 @@ fn parse_binary(parser: &mut Parser, left: WithSpan<Expr>) -> Result<WithSpan<Ex
 
 fn parse_binary_op(parser: &mut Parser) -> Result<WithSpan<BinaryOperator>, ()> {
     let token = parser.advance();
-    let operator = match &token.token_type {
-        &TokenType::BangEqual => BinaryOperator::BangEqual,
-        &TokenType::EqualEqual => BinaryOperator::EqualEqual,
-        &TokenType::Less => BinaryOperator::Less,
-        &TokenType::LessEqual => BinaryOperator::LessEqual,
-        &TokenType::Greater => BinaryOperator::Greater,
-        &TokenType::GreaterEqual => BinaryOperator::GreaterEqual,
-        &TokenType::Plus => BinaryOperator::Plus,
-        &TokenType::Minus => BinaryOperator::Minus,
-        &TokenType::Star => BinaryOperator::Star,
-        &TokenType::Slash => BinaryOperator::Slash,
-        &TokenType::Percent => BinaryOperator::Percent,
+    let operator = match token.token_type {
+        TokenType::BangEqual => BinaryOperator::BangEqual,
+        TokenType::EqualEqual => BinaryOperator::EqualEqual,
+        TokenType::Less => BinaryOperator::Less,
+        TokenType::LessEqual => BinaryOperator::LessEqual,
+        TokenType::Greater => BinaryOperator::Greater,
+        TokenType::GreaterEqual => BinaryOperator::GreaterEqual,
+        TokenType::Plus => BinaryOperator::Plus,
+        TokenType::Minus => BinaryOperator::Minus,
+        TokenType::Star => BinaryOperator::Star,
+        TokenType::Slash => BinaryOperator::Slash,
+        TokenType::Percent => BinaryOperator::Percent,
         _ => {
             parser.error(
                 &format!("Expected binary operator got {}", token.token_type),
@@ -148,9 +148,9 @@ fn parse_unary(parser: &mut Parser) -> Result<WithSpan<Expr>, ()> {
 
 fn parse_unary_op(parser: &mut Parser) -> Result<WithSpan<UnaryOperator>, ()> {
     let token = parser.advance();
-    match &token.token_type {
-        &TokenType::Bang => Ok(WithSpan::new(UnaryOperator::Bang, token.span)),
-        &TokenType::Minus => Ok(WithSpan::new(UnaryOperator::Minus, token.span)),
+    match token.token_type {
+        TokenType::Bang => Ok(WithSpan::new(UnaryOperator::Bang, token.span)),
+        TokenType::Minus => Ok(WithSpan::new(UnaryOperator::Minus, token.span)),
         _ => {
             parser.error(
                 &format!("Expected unary operator got {}", token.token_type),
@@ -174,9 +174,9 @@ fn parse_logical(parser: &mut Parser, left: WithSpan<Expr>) -> Result<WithSpan<E
 
 fn parse_logical_operator(parser: &mut Parser) -> Result<WithSpan<LogicalOperator>, ()> {
     let token = parser.advance();
-    let operator = match &token.token_type {
-        &TokenType::And => LogicalOperator::And,
-        &TokenType::Or => LogicalOperator::Or,
+    let operator = match token.token_type {
+        TokenType::And => LogicalOperator::And,
+        TokenType::Or => LogicalOperator::Or,
         _ => {
             parser.error(
                 &format!("Expected logical operator got {}", token.token_type),

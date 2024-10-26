@@ -32,7 +32,7 @@ pub struct Span {
 }
 
 impl Span {
-    pub unsafe fn new_unchecked(start: LineColumn, end: LineColumn) -> Self {
+    pub fn new_unchecked(start: LineColumn, end: LineColumn) -> Self {
         Span { start, end }
     }
 
@@ -107,7 +107,7 @@ impl<T> WithSpan<T> {
         }
     }
 
-    pub const unsafe fn new_unchecked(value: T, _start: u32, _end: u32) -> Self {
+    pub const fn new_unchecked(value: T, _start: u32, _end: u32) -> Self {
         Self {
             value,
             span: Span {

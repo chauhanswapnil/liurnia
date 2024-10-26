@@ -52,9 +52,8 @@ impl<'a> Scanner<'a> {
         F: Fn(char) -> bool,
     {
         let mut it = self.iter.clone();
-        match it.next() {
-            None => return false,
-            _ => (),
+        if it.next().is_none() {
+            return false;
         }
 
         if let Some(&ch) = it.peek() {

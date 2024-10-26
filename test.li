@@ -1,1 +1,11 @@
-var x: number;
+struct Point {
+	x: number;
+	y: number;
+}
+
+fun add(x, y) -> number {
+	return x + y;
+}
+
+Point.add(x, y);
+
